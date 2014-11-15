@@ -1,0 +1,264 @@
+<?xml version="1.0"?>
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<project name="JMeterBundle" default="install" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
+	<description>
+		JMeter Bundle is basically a lite version of JMeter for use with OASIS Framework.
+		For more information please visit https://github.com/jguglielmi/OASIS
+		
+		N.B. To build JMeter Bundle from a release you need both the binary and source archives
+
+		To download additional jars and source code needed for building the code and documentation:
+
+		  ant resolve
+
+		To build JMeter from source:
+		  ant [install]
+
+		To rebuild:
+		  ant clean install
+		  
+		To run JMeter GUI or a jmx:
+		  ant run
+		  
+		  ant run -Djmx=test/SimpleHttpTest1.jmx
+		  
+	</description>
+  
+	<property name="jmeter.version" value="apache-jmeter-2.12"/>
+	<property name="build" location="build"/>
+	<property name="lib" location="lib"/>
+	<property name="dist" location="bin"/>
+	<property name="main.class" value="org.apache.jmeter.NewDriver"/>
+	<property name="jarname" value="jmeterbundle.jar"/>
+  	<property name="bundled" location="bundled"/>
+	
+	<!-- Where the Sources live -->
+	<property name="src.dir" value="src"/>
+	<property name="src.core" value="src/core"/>
+	<property name="src.http" value="src/protocol/http"/>
+	<property name="src.ftp" value="src/protocol/ftp"/>
+	<property name="src.test" value="test/src"/>
+	<property name="src.jdbc" value="src/protocol/jdbc"/>
+	<property name="src.java" value="src/protocol/java"/>
+	<property name="src.junit" value="src/junit"/>
+	<property name="src.components" value="src/components"/>
+	<property name="src.functions" value="src/functions"/>
+	<property name="src.jorphan" value="src/jorphan"/>
+	<property name="src.ldap" value="src/protocol/ldap"/>
+	<property name="src.tcp" value="src/protocol/tcp"/>
+	<property name="src.examples" value="src/examples"/>
+	<property name="src.mail" value="src/protocol/mail"/>
+	<property name="src.monitor.components" value="src/monitor/components"/>
+	<property name="src.monitor.model" value="src/monitor/model"/>
+	<property name="src.jms" value="src/protocol/jms"/>
+	<property name="src.native" value="src/protocol/native"/>
+	<property name="src.mongodb" value="src/protocol/mongodb"/>
+	<property name="src.report" value="src/reports"/>
+	
+	<path id="srcpaths">
+		<pathelement location="${src.core}"/>
+		<pathelement location="${src.components}"/>
+		<pathelement location="${src.functions}"/>
+		<pathelement location="${src.http}"/>
+		<pathelement location="${src.ftp}"/>
+		<pathelement location="${src.jdbc}"/>
+		<pathelement location="${src.java}"/>
+		<pathelement location="${src.junit}"/>
+		<pathelement location="${src.jorphan}"/>
+		<pathelement location="${src.ldap}"/>
+		<pathelement location="${src.tcp}"/>
+		<pathelement location="${src.examples}"/>
+		<pathelement location="${src.mail}"/>
+		<pathelement location="${src.monitor.components}"/>
+		<pathelement location="${src.monitor.model}"/>
+		<pathelement location="${src.jms}"/>
+		<pathelement location="${src.native}"/>
+		<pathelement location="${src.mongodb}"/>
+		<pathelement location="${src.report}"/>
+	</path>
+	
+	<!-- Build bundled Manifest Classpath -->
+	<path id="bundled.classpath">
+	  <fileset dir="${basedir}">
+		 <include name="lib/*.jar"/>
+	  </fileset>
+	</path>
+	<pathconvert property="manifest.classpath" pathsep=" ">
+	  <path refid="bundled.classpath"/>
+	  <mapper>
+		<chainedmapper>
+		   <flattenmapper/>
+		   <globmapper from="*.jar" to="lib/*.jar"/>
+		</chainedmapper>
+	  </mapper>
+	</pathconvert>
+	<pathconvert property="runwin.classpath" pathsep=";">
+	  <path refid="bundled.classpath"/>
+	  <mapper>
+		<chainedmapper>
+		   <flattenmapper/>
+		   <globmapper from="*.jar" to="lib/*.jar"/>
+		</chainedmapper>
+	  </mapper>
+	</pathconvert>
+
+	<target name="init" depends="" description="initializes build">
+		<!-- Create the time stamp -->
+		<tstamp/>
+		<!-- Create the build directory structure used by compile -->
+		<mkdir dir="${build}"/>
+		<mkdir dir="${lib}"/>
+		<mkdir dir="${lib}/ext"/>
+		<mkdir dir="${lib}/junit"/>
+		<echo>basedir: ${basedir}</echo>
+		<echo>VM: ${java.vm.name}</echo>
+		<echo>Username: ${user.name}</echo>
+	</target>
+	
+	<target name="resolve" depends="" description="downloads dependencies">
+		<ivy:retrieve pattern="${lib}/[artifact]-[revision].[ext]" conf="*"/>
+		<ivy:report todir="${build}"/>
+		<!-- download JMeter source and copy to current directory -->
+		<get dest="${basedir}/${jmeter.version}_src.zip" src="http://www.us.apache.org/dist/jmeter/source/${jmeter.version}_src.zip" verbose="true" usetimestamp="true"/>
+		<unzip dest="${basedir}">
+			<fileset dir="${basedir}">
+				<include name="${jmeter.version}_src.zip"/>
+			</fileset>
+		</unzip>
+		<mkdir dir="${basedir}/src"/>
+		<mkdir dir="${basedir}/bin"/>
+		<copy todir="${basedir}/src" >
+			<fileset dir="${jmeter.version}/src"/>
+		</copy>
+		<copy todir="${basedir}/bin" >
+			<fileset dir="${jmeter.version}/bin" includes="*.properties"/>
+		</copy>
+	</target>
+	
+	<target name="clean" description="clean up" >
+		<!-- clean up and delete various build directories -->
+		<delete dir="${build}"/>
+		<delete dir="${dist}"/>
+		<delete dir="${lib}"/>
+		<delete dir="${jmeter.version}"/>
+		<delete file="${jmeter.version}_src.zip"/>
+	</target>
+
+	<target name="compile" depends="init" description="generate the jar file">
+		<!-- Compile the java code from ${srcpaths} into ${build} -->
+		<javac destdir="${build}" includeantruntime="false" optimize="on" encoding="UTF-8" source="1.6" target="1.6" debug="on">
+			<src refid="srcpaths" />
+			<classpath>
+				<pathelement path="${classpath}"/>
+				<fileset dir="${lib}">
+					<include name="**/*.jar"/>
+				</fileset>
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="install" depends="compile" description="generate the jar file">
+		<!-- Create the Bundled directory -->
+		<mkdir dir="${dist}"/>
+		
+		<!-- Put everything we want from ${build} and ${lib} into the output .jar file -->
+		<jar jarfile="${dist}/jb-temp.jar" basedir="${build}">
+			<!-- include resources -->
+			<fileset dir="${src.core}" includes="org/apache/jmeter/images/**" excludes="**/*.properties"/>
+			<fileset dir="${src.core}" includes="**/*.properties">
+				<exclude name="*eucJP*"/>
+			</fileset>
+			<!-- This file is used by the jmeter -h option -->
+			<fileset dir="${src.core}" includes="org/apache/jmeter/help.txt"/>
+			<fileset dir="${src.components}" includes="**/*.properties" />
+			<fileset dir="${src.functions}" includes="**/*.properties" />
+			<fileset dir="${src.http}" includes="**/*.properties" />
+			<fileset dir="${src.ftp}" includes="**/*.properties" />
+			<fileset dir="${src.jdbc}" includes="**/*.properties" />
+			<fileset dir="${src.java}" includes="**/*.properties" />
+			<fileset dir="${src.junit}" includes="**/*.properties" />
+			<fileset dir="${src.junit}"   excludes="org/**/*" />
+			<fileset dir="${src.report}" includes="**/*.properties" />
+			<fileset dir="${src.ldap}" includes="**/*.properties" />
+			<fileset dir="${src.mail}" includes="**/*.properties" />
+			<fileset dir="${src.mail}" includes="**/*.providers" />
+			<fileset dir="${src.tcp}" includes="**/*.properties" />
+			<fileset dir="${src.jms}" includes="**/*.properties" />
+			<fileset dir="${src.native}" includes="**/*.properties" />
+			<fileset dir="${src.mongodb}" includes="**/*.properties" />
+			<fileset dir="${src.jorphan}" includes="**/*.properties"/>
+			<fileset dir="${src.examples}" includes="**/*.properties" />	
+			
+			<!--
+			<zipgroupfileset dir="lib" includes="*.jar" excludes="META-INF/**/*,**/*.SF,**/*.DSA,**/*.RSA"/>
+			<zipgroupfileset dir="lib/api" includes="*.jar" excludes="META-INF/**/*,**/*.SF,**/*.DSA,**/*.RSA"/> 
+			<zipgroupfileset dir="lib/doc" includes="*.jar" excludes="META-INF/**/*,**/*.SF,**/*.DSA,**/*.RSA"/> 
+			<zipgroupfileset dir="lib/junit" includes="*.jar" excludes="META-INF/**/*,**/*.SF,**/*.DSA,**/*.RSA"/>
+			<zipgroupfileset dir="lib/ext" includes="*.jar" excludes="META-INF/**/*,**/*.SF,**/*.DSA,**/*.RSA"/>
+			-->
+			
+			<!-- <zipgroupfileset dir="lib" includes="*.jar" excludes="META-INF/**/*,**/*.SF,**/*.DSA,**/*.RSA"/> -->
+			<manifest>
+			   <attribute name="Main-Class" value="org.apache.jmeter.NewDriver"/>
+			   <attribute name="Class-Path" value="${manifest.classpath}"/>
+			</manifest>
+		</jar>
+		<!-- need to strip out signed jar stuff with this next step for some reason the first exclude doesn't work -->
+		<jar destfile="${dist}/${jarname}" basedir="${build}">
+		  <zipfileset src="${dist}/jb-temp.jar" excludes="META-INF/*.SF,META-INF/*.DSA,META-INF/*.RSA"/>
+		  <manifest>
+			<attribute name="Main-Class" value="org.apache.jmeter.NewDriver"/>
+			<attribute name="Class-Path" value="${manifest.classpath}"/>
+		  </manifest>
+		</jar>
+		<delete file="${dist}/jb-temp.jar"/> <!-- remove temporary jar file --> 
+		<copy todir="lib/ext" >
+			<fileset dir="${dist}" includes="${jarname}"/>
+		</copy>
+	</target>
+	
+	<!--
+	To provide a jmx file use the following syntax:
+	ant run -Djmx=test/SimpleHttpTest1.jmx
+	
+	otherwise to just use JMeter GUI:
+	ant run
+	-->
+	
+	<target name="run" description="runs generate the standalone jar file">
+		<echo>basedir: ${basedir}</echo>
+		<!--<pathconvert property="expanded.bundleClassPath" refid="bundleClassPath"/> -->
+		<!--<echo message='set CLASSPATH=${runwin.classpath}' file="${dist}/libs-classpath.bat"/> -->
+		
+		<!-- When jmx property is set modify arguments sent to jmeter to include the jmx -->
+		<condition property="runArgs" value="-n -t ${jmx}" else="">
+			<isset property="jmx"/>
+		</condition>
+		<echo>runArgs: ${runArgs}</echo>
+		
+		<java classname="org.apache.jmeter.NewDriver" fork="true">
+			<arg line="${runArgs}"/>
+			<classpath id="bundleClassPath" >
+				<pathelement location="${dist}/${jarname}"/>
+				<path refid="bundled.classpath" />
+			</classpath>
+		  <sysproperty key="jmeter.home" value="${basedir}"/>
+		</java>
+	</target>
+	
+</project>

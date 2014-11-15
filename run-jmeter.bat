@@ -1,0 +1,1 @@
+ant resolve install run
