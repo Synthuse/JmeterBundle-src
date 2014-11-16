@@ -47,6 +47,14 @@
 	<property name="jarname" value="jmeterbundle.jar"/>
   	<property name="bundled" location="bundled"/>
 	
+	
+	<property name="src.unit.test" value="test"/>
+	
+	<path id="compile.classpath"> <!-- this classpath refid includes everything needed for compiling the source -->
+		<pathelement path="${classpath}"/>
+		<fileset dir="lib"><include name="**/*.jar"/></fileset>
+	</path>
+	
 	<!-- Where the Sources live -->
 	<property name="src.dir" value="src"/>
 	<property name="src.core" value="src/core"/>
@@ -148,6 +156,9 @@
 		<copy todir="${basedir}/bin" >
 			<fileset dir="${jmeter.version}/bin" includes="*.properties"/>
 		</copy>
+		<!-- clean up jmeter src zip and extracted directory -->
+		<delete dir="${jmeter.version}"/>
+		<delete file="${jmeter.version}_src.zip"/>
 	</target>
 	
 	<target name="clean" description="clean up" >
@@ -163,13 +174,51 @@
 		<!-- Compile the java code from ${srcpaths} into ${build} -->
 		<javac destdir="${build}" includeantruntime="false" optimize="on" encoding="UTF-8" source="1.6" target="1.6" debug="on">
 			<src refid="srcpaths" />
+			<classpath refid="compile.classpath" />
+		</javac>
+	</target>
+	
+	<target name="unit_test" depends="compile" description="run the unit tests">
+		<!-- Compile the java unit test code from ${src.unit.test} into ${build} -->
+		<javac srcdir="${src.unit.test}" destdir="${build}" includeantruntime="false">
 			<classpath>
-				<pathelement path="${classpath}"/>
-				<fileset dir="${lib}">
-					<include name="**/*.jar"/>
-				</fileset>
+				<path refid="compile.classpath"/>
+				<pathelement location="${build}"/>
 			</classpath>
 		</javac>
+		<!-- run junit test dump results into ${build}/unit_tests -->
+		<mkdir dir="${build}/unit_tests" />
+		<junit fork="no" printsummary="yes" haltonfailure="no" haltonerror="no" dir="${basedir}">
+			<classpath>
+				<path refid="compile.classpath"/>
+				<pathelement location="${build}"/>
+			</classpath>
+			<formatter type="xml" usefile="true" />
+			<formatter type="plain" usefile="false" />
+			<batchtest todir="${build}/unit_tests">
+				<fileset dir="${src.unit.test}"><include name="**/*.java" /></fileset>
+			</batchtest>
+		</junit>
+
+		<!-- generate report with junitreport -->
+		<junitreport todir="${build}">
+			<fileset dir="${build}/unit_tests" />
+			<report todir="${build}/report" />
+		</junitreport>
+
+		<!-- parse the report through a filter chain to extract what you want -->
+		<loadfile property="reportSummary" srcfile="${build}/report/overview-summary.html">
+			<filterchain>
+			<linecontainsregexp>
+			  <regexp pattern='title="Display all tests"' />
+			</linecontainsregexp>
+			<replaceregex pattern='.*"all-tests.html".(\d*).*?"alltests-fails.html".(\d*).*?"alltests-errors.html".(\d*).*?"alltests-skipped.html".(\d*).*' replace="Tests: \1, Fails: \2, Errors: \3, Skips: \4" />
+			</filterchain>
+		</loadfile> 
+		<echo>
+		*** Unit Test Summary ***
+		${reportSummary}
+		</echo>
 	</target>
 
 	<target name="install" depends="compile" description="generate the jar file">
