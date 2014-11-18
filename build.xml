@@ -161,6 +161,16 @@
 		<delete file="${jmeter.version}_src.zip"/>
 	</target>
 	
+	<target name="make_pom" depends="" description="The makepom task allows to convert an ivy file to a pom file.">
+		<ivy:makepom ivyfile="${basedir}/ivy.xml" pomfile="${basedir}/generated.pom" conf="*">
+		<!--
+			<mapping conf="default" scope="compile"/>
+			<mapping conf="runtime" scope="default"/>
+			<dependency group="com.acme" artifact="acme-logging" version="1.0" optional="true"/>
+		-->
+		</ivy:makepom>
+	</target>
+	
 	<target name="clean" description="clean up" >
 		<!-- clean up and delete various build directories -->
 		<delete dir="${build}"/>
@@ -226,7 +236,7 @@
 		<mkdir dir="${dist}"/>
 		
 		<!-- Put everything we want from ${build} and ${lib} into the output .jar file -->
-		<jar jarfile="${dist}/jb-temp.jar" basedir="${build}">
+		<jar jarfile="${dist}/${jarname}" basedir="${build}">
 			<!-- include resources -->
 			<fileset dir="${src.core}" includes="org/apache/jmeter/images/**" excludes="**/*.properties"/>
 			<fileset dir="${src.core}" includes="**/*.properties">
@@ -267,7 +277,9 @@
 			   <attribute name="Class-Path" value="${manifest.classpath}"/>
 			</manifest>
 		</jar>
-		<!-- need to strip out signed jar stuff with this next step for some reason the first exclude doesn't work -->
+		
+		<!-- to strip out signed jar stuff with this next step for some reason the first exclude doesn't work -->
+		<!--
 		<jar destfile="${dist}/${jarname}" basedir="${build}">
 		  <zipfileset src="${dist}/jb-temp.jar" excludes="META-INF/*.SF,META-INF/*.DSA,META-INF/*.RSA"/>
 		  <manifest>
@@ -275,7 +287,11 @@
 			<attribute name="Class-Path" value="${manifest.classpath}"/>
 		  </manifest>
 		</jar>
-		<delete file="${dist}/jb-temp.jar"/> <!-- remove temporary jar file --> 
+		<delete file="${dist}/jb-temp.jar"/> 
+		-->
+		<!-- remove temporary jar file --> 
+		
+		<!-- copy new jar created to lib/ext so Jmeter will find various action classes -->
 		<copy todir="lib/ext" >
 			<fileset dir="${dist}" includes="${jarname}"/>
 		</copy>

@@ -1,5 +1,5 @@
 <ivy-module version="2.0" xmlns:e="http://ant.apache.org/ivy/extra">
-    <info organisation="org.oasis" module="oasis"/>
+    <info organisation="org.oasis" module="JmeterBundle"/>
 	<configurations defaultconfmapping="runtime->*,!sources,!javadoc,!optional,!junit,!jmock">
 		<conf name="runtime"/>
 		<conf name="test"/>
