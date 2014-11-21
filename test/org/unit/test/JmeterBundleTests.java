@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
 import java.io.*;
 import org.apache.jmeter.JMeter;
 import org.apache.jmeter.engine.JMeterEngine;
@@ -15,7 +16,7 @@ import org.apache.jorphan.collections.HashTree;
 public class JmeterBundleTests {
 
     public static String jmeterHomePath = ".";
-	public static String jmeterPropertiesFile = "./bin/jmeter.properties";
+	public static String jmeterPropertiesFile = "./jmeter/jmeter.properties";
 	public static String testPlanFilename = "./test/SimpleHttpTest1.jmx";
 	public JMeterEngine jEngine = null;
 	public HashTree currentHashTree = null;
@@ -45,6 +46,8 @@ public class JmeterBundleTests {
 		assertNotNull(jEngine);
         // jmeter.properties
         JMeterUtils.loadJMeterProperties(jmeterPropertiesFile);
+ 		JMeterUtils.initLogging();// you can comment this line out to see extra log messages of i.e. DEBUG level
+		JMeterUtils.initLocale();
         //return jEngine;
 	}
 	
@@ -85,4 +88,14 @@ public class JmeterBundleTests {
 			e.printStackTrace();
 		}
 	}
+	
+	//@Test
+	void startJmeterGui() {
+		//org.apache.jmeter.NewDriver.main(new String[]{"-pjmeter/jmeter.properties"});
+		//JMeter jm = new JMeter();
+		//jm.start(new String[]{"-pjmeter/jmeter.properties"});
+	}
+	
 }
+
+

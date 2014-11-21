@@ -42,7 +42,7 @@
 	<property name="jmeter.version" value="apache-jmeter-2.12"/>
 	<property name="build" location="build"/>
 	<property name="lib" location="lib"/>
-	<property name="dist" location="bin"/>
+	<property name="dist" location="jmeter"/>
 	<property name="main.class" value="org.apache.jmeter.NewDriver"/>
 	<property name="jarname" value="jmeterbundle.jar"/>
   	<property name="bundled" location="bundled"/>
@@ -111,16 +111,16 @@
 	  <mapper>
 		<chainedmapper>
 		   <flattenmapper/>
-		   <globmapper from="*.jar" to="lib/*.jar"/>
+		   <globmapper from="*.jar" to="../lib/*.jar"/>
 		</chainedmapper>
 	  </mapper>
 	</pathconvert>
-	<pathconvert property="runwin.classpath" pathsep=";">
+	<pathconvert property="ivy.manifest.classpath" pathsep=" ">
 	  <path refid="bundled.classpath"/>
 	  <mapper>
 		<chainedmapper>
 		   <flattenmapper/>
-		   <globmapper from="*.jar" to="lib/*.jar"/>
+		   <globmapper from="*.jar" to="../lib/ivy/*.jar"/>
 		</chainedmapper>
 	  </mapper>
 	</pathconvert>
@@ -149,13 +149,14 @@
 			</fileset>
 		</unzip>
 		<mkdir dir="${basedir}/src"/>
-		<mkdir dir="${basedir}/bin"/>
 		<copy todir="${basedir}/src" >
 			<fileset dir="${jmeter.version}/src"/>
 		</copy>
+		<!--
 		<copy todir="${basedir}/bin" >
 			<fileset dir="${jmeter.version}/bin" includes="*.properties"/>
 		</copy>
+		-->
 		<!-- clean up jmeter src zip and extracted directory -->
 		<delete dir="${jmeter.version}"/>
 		<delete file="${jmeter.version}_src.zip"/>
@@ -174,10 +175,10 @@
 	<target name="clean" description="clean up" >
 		<!-- clean up and delete various build directories -->
 		<delete dir="${build}"/>
-		<delete dir="${dist}"/>
 		<delete dir="${lib}"/>
 		<delete dir="${jmeter.version}"/>
 		<delete file="${jmeter.version}_src.zip"/>
+		<delete file="${dist}/${jarname}"/>
 	</target>
 
 	<target name="compile" depends="init" description="generate the jar file">
@@ -274,27 +275,13 @@
 			<!-- <zipgroupfileset dir="lib" includes="*.jar" excludes="META-INF/**/*,**/*.SF,**/*.DSA,**/*.RSA"/> -->
 			<manifest>
 			   <attribute name="Main-Class" value="org.apache.jmeter.NewDriver"/>
-			   <attribute name="Class-Path" value="${manifest.classpath}"/>
+			   <attribute name="Class-Path" value="${manifest.classpath} ${ivy.manifest.classpath}"/> <!-- ../lib/* -->
 			</manifest>
 		</jar>
 		
-		<!-- to strip out signed jar stuff with this next step for some reason the first exclude doesn't work -->
-		<!--
-		<jar destfile="${dist}/${jarname}" basedir="${build}">
-		  <zipfileset src="${dist}/jb-temp.jar" excludes="META-INF/*.SF,META-INF/*.DSA,META-INF/*.RSA"/>
-		  <manifest>
-			<attribute name="Main-Class" value="org.apache.jmeter.NewDriver"/>
-			<attribute name="Class-Path" value="${manifest.classpath}"/>
-		  </manifest>
-		</jar>
-		<delete file="${dist}/jb-temp.jar"/> 
-		-->
-		<!-- remove temporary jar file --> 
-		
 		<!-- copy new jar created to lib/ext so Jmeter will find various action classes -->
-		<copy todir="lib/ext" >
-			<fileset dir="${dist}" includes="${jarname}"/>
-		</copy>
+
+		<mkdir dir="lib/ext"/>
 	</target>
 	
 	<!--
@@ -307,17 +294,18 @@
 	
 	<target name="run" description="runs generate the standalone jar file">
 		<echo>basedir: ${basedir}</echo>
-		<!--<pathconvert property="expanded.bundleClassPath" refid="bundleClassPath"/> -->
-		<!--<echo message='set CLASSPATH=${runwin.classpath}' file="${dist}/libs-classpath.bat"/> -->
+		
+		<!--<pathconvert property="expanded.bundleClassPath" refid="bundled.classpath"/>
+		<echo message='set jmclasses=${expanded.bundleClassPath}' file="${dist}/libs-classpath.bat"/> -->
 		
 		<!-- When jmx property is set modify arguments sent to jmeter to include the jmx -->
 		<condition property="runArgs" value="-n -t ${jmx}" else="">
 			<isset property="jmx"/>
 		</condition>
 		<echo>runArgs: ${runArgs}</echo>
-		
+		<echo>using jmeter properties: ${dist}/jmeter.properties</echo>
 		<java classname="org.apache.jmeter.NewDriver" fork="true">
-			<arg line="${runArgs}"/>
+			<arg line="-p${dist}/jmeter.properties ${runArgs}"/>
 			<classpath id="bundleClassPath" >
 				<pathelement location="${dist}/${jarname}"/>
 				<path refid="bundled.classpath" />
