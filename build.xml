@@ -120,7 +120,7 @@
 	  <mapper>
 		<chainedmapper>
 		   <flattenmapper/>
-		   <globmapper from="*.jar" to="../lib/ivy/*.jar"/>
+		   <globmapper from="*.jar" to="../lib/jmeter/*.jar"/>
 		</chainedmapper>
 	  </mapper>
 	</pathconvert>
