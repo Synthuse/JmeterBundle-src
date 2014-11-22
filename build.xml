@@ -99,31 +99,6 @@
 		<pathelement location="${src.mongodb}"/>
 		<pathelement location="${src.report}"/>
 	</path>
-	
-	<!-- Build bundled Manifest Classpath -->
-	<path id="bundled.classpath">
-	  <fileset dir="${basedir}">
-		 <include name="lib/*.jar"/>
-	  </fileset>
-	</path>
-	<pathconvert property="manifest.classpath" pathsep=" ">
-	  <path refid="bundled.classpath"/>
-	  <mapper>
-		<chainedmapper>
-		   <flattenmapper/>
-		   <globmapper from="*.jar" to="../lib/*.jar"/>
-		</chainedmapper>
-	  </mapper>
-	</pathconvert>
-	<pathconvert property="ivy.manifest.classpath" pathsep=" ">
-	  <path refid="bundled.classpath"/>
-	  <mapper>
-		<chainedmapper>
-		   <flattenmapper/>
-		   <globmapper from="*.jar" to="../lib/jmeter/*.jar"/>
-		</chainedmapper>
-	  </mapper>
-	</pathconvert>
 
 	<target name="init" depends="" description="initializes build">
 		<!-- Create the time stamp -->
@@ -235,6 +210,31 @@
 	<target name="install" depends="compile" description="generate the jar file">
 		<!-- Create the Bundled directory -->
 		<mkdir dir="${dist}"/>
+		
+		<!-- Build bundled Manifest Classpath -->
+		<path id="bundled.classpath">
+		  <fileset dir="${basedir}">
+			 <include name="lib/*.jar"/>
+		  </fileset>
+		</path>
+		<pathconvert property="manifest.classpath" pathsep=" ">
+		  <path refid="bundled.classpath"/>
+		  <mapper>
+			<chainedmapper>
+			   <flattenmapper/>
+			   <globmapper from="*.jar" to="../lib/*.jar"/>
+			</chainedmapper>
+		  </mapper>
+		</pathconvert>
+		<pathconvert property="ivy.manifest.classpath" pathsep=" ">
+		  <path refid="bundled.classpath"/>
+		  <mapper>
+			<chainedmapper>
+			   <flattenmapper/>
+			   <globmapper from="*.jar" to="../lib/jmeter/*.jar"/>
+			</chainedmapper>
+		  </mapper>
+		</pathconvert>
 		
 		<!-- Put everything we want from ${build} and ${lib} into the output .jar file -->
 		<jar jarfile="${dist}/${jarname}" basedir="${build}">
